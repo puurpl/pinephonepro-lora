@@ -1,0 +1,15 @@
+# Build artifacts
+helium-lorawan/build/
+helium-lorawan/helium-lorawan
+helium-lorawan/credentials.h
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

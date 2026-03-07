@@ -1,0 +1,20 @@
+# PineDio LoRa Backplate configuration for meshtasticd
+# Copy this file to /etc/meshtasticd/config.d/
+#
+# Hardware: ATtiny84 I2C-to-SPI bridge (0x28) + SX1262 transceiver
+# I2C bus:  /dev/i2c-5 on PinePhone Pro (Megi kernel 6.19+)
+#
+# IRQ_GPIO: -1 disables hardware GPIO IRQ (uses software polling instead).
+# GPIO 96 (GPIO3_A0) is the hardware interrupt pin but cannot be used
+# because it conflicts with the i2c5 pinctrl group in the kernel DTS.
+# See docs/full-build-log.md Step 5 for the full analysis.
+
+Lora:
+  Module: sx1262
+  CS: 0
+  IRQ: 10
+  spidev: i2c-bridge
+  I2CDevice: /dev/i2c-5
+  I2CAddress: 0x28
+  IRQ_GPIO: -1
+  DIO2_AS_RF_SWITCH: true

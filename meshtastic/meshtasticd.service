@@ -1,0 +1,23 @@
+# systemd service for meshtasticd with PineDio LoRa I2C Backplate
+# Copy to /etc/systemd/system/meshtasticd.service
+#
+# IMPORTANT: Always stop meshtasticd with 'systemctl stop meshtasticd'.
+# Never use 'kill -9' — it will hang the ATtiny84's USI state machine,
+# requiring a full power cycle (not just reboot) to recover.
+
+[Unit]
+Description=Meshtastic Daemon (PineDio LoRa I2C Backplate)
+After=local-fs.target
+StartLimitIntervalSec=120
+StartLimitBurst=5
+
+[Service]
+Type=simple
+ExecStart=/home/mobian/meshtastic-firmware/.pio/build/native/meshtasticd -d /etc/meshtasticd
+KillSignal=SIGTERM
+TimeoutStopSec=10
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
