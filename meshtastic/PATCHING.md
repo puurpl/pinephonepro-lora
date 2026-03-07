@@ -193,6 +193,24 @@ block, add an `else if` for the I2C bridge after the CH341 recovery code:
 }
 ```
 
+### Add CPU busy-loop fix (at the end of the main loop)
+
+Find the end of the `loop()` function, after `mainDelay.delay(delayMsec);` and
+the closing brace of the `while` loop. Add a sleep to prevent 100% CPU usage:
+
+```cpp
+#ifdef ARCH_PORTDUINO
+    // On Linux, enforce a minimum sleep to prevent busy-looping.
+    // The cooperative scheduler can return delayMsec=0 (or the
+    // InterruptableDelay may wake immediately), causing 100% CPU
+    // which starves the API server from processing TCP connections.
+    // 10ms cap is plenty fast for LoRa (packets take 50-500ms on air).
+    usleep(10000);
+#endif
+```
+
+Without this, meshtasticd uses 100% CPU on Linux.
+
 ## Build
 
 After applying all patches:

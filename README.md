@@ -63,9 +63,9 @@ through intermediate nodes — no cell towers or internet needed.
 
 ```bash
 sudo apt update
-sudo apt install cmake libi2c-dev python3-pip python3-venv libgpiod-dev \
-    libyaml-cpp-dev libbluetooth-dev libuv1-dev libusb-1.0-0-dev \
-    build-essential g++ git
+sudo apt install cmake libi2c-dev i2c-tools python3-pip python3-venv \
+    libgpiod-dev libyaml-cpp-dev libbluetooth-dev libuv1-dev \
+    libusb-1.0-0-dev build-essential g++ git
 ```
 
 ### 1.2 Clone and build meshtastic firmware
@@ -104,7 +104,7 @@ source venv/bin/activate
 pio run --environment native    # ~15-18 minutes on PinePhone Pro
 ```
 
-Binary: `~/.pio/build/native/meshtasticd`
+Binary: `~/meshtastic-firmware/.pio/build/native/meshtasticd`
 
 ### 1.5 Install config and service
 
@@ -132,7 +132,7 @@ sudo systemctl start meshtasticd
 sudo systemctl status meshtasticd
 
 # Install the Meshtastic CLI
-pip3 install --user --break-system-packages meshtastic
+pip3 install --user --break-system-packages --upgrade meshtastic
 
 # Set region (US covers USA/Canada/Mexico, 902-928 MHz)
 meshtastic --host 127.0.0.1 --set lora.region US
@@ -299,7 +299,7 @@ simultaneously.
 ## File structure
 
 ```
-pinephone-lora/
+pinephonepro-lora/
 ├── README.md                          This file
 ├── meshtastic/
 │   ├── I2CBridgeHal.h                 RadioLibHal for I2C bridge (meshtastic version)
