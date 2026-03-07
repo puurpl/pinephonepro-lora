@@ -19,7 +19,7 @@
 //
 // Region: US915 FSB2 (Helium subband, channels 8-15, 903.9-905.3 MHz)
 //
-// See docs/full-build-log.md Step 8 for full documentation.
+// See ~/lora-setup.md Step 8 for full documentation.
 
 #include <cstdio>
 #include <cstdlib>
@@ -75,8 +75,18 @@ static void cleanShutdown()
 static void signalHandler(int sig)
 {
     (void)sig;
-    fprintf(stderr, "\n[helium] Interrupted, cleaning up...\n");
-    cleanShutdown();
+    // Use write() instead of fprintf — async-signal-safe
+    const char msg[] = "\n[helium] Interrupted, cleaning up...\n";
+    (void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
+    // term() uses only write/read/usleep (all async-signal-safe)
+    if (g_hal) {
+        g_hal->term();
+        g_hal = nullptr;
+    }
+    // Fork-based system() is not async-signal-safe, but restarting meshtasticd
+    // is important enough to accept the small risk in a single-threaded CLI tool.
+    // The alternative (not restarting) leaves the radio unusable.
+    system("systemctl start meshtasticd 2>/dev/null");
     _exit(1);
 }
 

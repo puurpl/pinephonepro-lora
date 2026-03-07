@@ -104,7 +104,10 @@ class I2CBridgeHal : public RadioLibHal
                     break;
             }
             usleep(1000);
-            std::cout << "I2CBridgeHal: Clean shutdown complete" << std::endl;
+            // Use write() instead of std::cout — term() may be called from a
+            // signal handler where iostream is not async-signal-safe.
+            const char msg[] = "I2CBridgeHal: Clean shutdown complete\n";
+            (void)::write(STDOUT_FILENO, msg, sizeof(msg) - 1);
         }
     }
 
@@ -168,8 +171,9 @@ class I2CBridgeHal : public RadioLibHal
                     int ret = gpiod_line_request_wait_edge_events(irqLineRequest, 100000000); // 100ms
                     if (ret > 0) {
                         gpiod_line_request_read_edge_events(irqLineRequest, eventBuf, 1);
-                        if (irqCallback) {
-                            irqCallback();
+                        auto cb = irqCallback.load();
+                        if (cb) {
+                            cb();
                         }
                     }
                 }
@@ -198,7 +202,8 @@ class I2CBridgeHal : public RadioLibHal
                     int fastPollRemaining = 0;
                     while (irqRunning) {
                         usleep(pollInterval);
-                        if (irqPollEnabled && irqCallback) {
+                        auto cb = irqCallback.load();
+                        if (irqPollEnabled && cb) {
                             // Read SX1262 GetIrqStatus (opcode 0x12) via I2C bridge.
                             // SPI frame: [0x12, NOP, NOP, NOP] → [status, NOP, irqH, irqL]
                             uint8_t out[] = {0x12, 0x00, 0x00, 0x00};
@@ -206,7 +211,7 @@ class I2CBridgeHal : public RadioLibHal
                             spiTransfer(out, 4, in);
                             uint16_t irqFlags = ((uint16_t)in[2] << 8) | in[3];
                             if (irqFlags != 0) {
-                                irqCallback();
+                                cb();
                                 // Switch to fast polling to catch packets arriving during
                                 // worker-thread processing (readData → clearIrqStatus → setRx).
                                 pollInterval = POLL_FAST_US;
@@ -351,7 +356,7 @@ class I2CBridgeHal : public RadioLibHal
     std::atomic<bool> irqPollEnabled{false};
     std::atomic<bool> inError{false};
     std::thread irqThread;
-    void (*irqCallback)(void) = nullptr;
+    std::atomic<void (*)(void)> irqCallback{nullptr};
 
     void setupIrqGpio()
     {
@@ -450,7 +455,9 @@ class I2CBridgeHal : public RadioLibHal
             }
 
             if (!started) {
-                for (size_t i = 0; i < seqLen; i++) {
+                // Look for any byte that matches the start of a subsequence.
+                // Only accept it if there is at least one more byte to match after it.
+                for (size_t i = 0; i + 1 < seqLen; i++) {
                     if (byte == sequence[i]) {
                         started = true;
                         seqIdx = i;
@@ -464,7 +471,15 @@ class I2CBridgeHal : public RadioLibHal
                         done = true;
                     }
                 } else {
+                    // Mismatch — re-check current byte as a potential new start
                     started = false;
+                    for (size_t i = 0; i + 1 < seqLen; i++) {
+                        if (byte == sequence[i]) {
+                            started = true;
+                            seqIdx = i;
+                            break;
+                        }
+                    }
                 }
             }
             count++;

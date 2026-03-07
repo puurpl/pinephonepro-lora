@@ -81,7 +81,8 @@ class I2CBridgeHal : public RadioLibHal
                     break;
             }
             usleep(1000);
-            std::cout << "I2CBridgeHal: Clean shutdown complete" << std::endl;
+            const char msg[] = "I2CBridgeHal: Clean shutdown complete\n";
+            (void)::write(STDOUT_FILENO, msg, sizeof(msg) - 1);
         }
     }
 
@@ -253,7 +254,7 @@ class I2CBridgeHal : public RadioLibHal
             }
 
             if (!started) {
-                for (size_t i = 0; i < seqLen; i++) {
+                for (size_t i = 0; i + 1 < seqLen; i++) {
                     if (byte == sequence[i]) {
                         started = true;
                         seqIdx = i;
@@ -268,6 +269,13 @@ class I2CBridgeHal : public RadioLibHal
                     }
                 } else {
                     started = false;
+                    for (size_t i = 0; i + 1 < seqLen; i++) {
+                        if (byte == sequence[i]) {
+                            started = true;
+                            seqIdx = i;
+                            break;
+                        }
+                    }
                 }
             }
             count++;

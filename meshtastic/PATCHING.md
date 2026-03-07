@@ -65,6 +65,7 @@ static void i2cBridgeCleanup()
 {
     if (i2cBridgeHal) {
         i2cBridgeHal->term();
+        i2cBridgeHal = nullptr; // prevent double cleanup via atexit + signal handler
     }
 }
 
@@ -176,6 +177,8 @@ block, add an `else if` for the I2C bridge after the CH341 recovery code:
 ```cpp
 } else if (portduino_config.lora_spi_dev == "i2c-bridge") {
     if (i2cBridgeHal != nullptr) {
+        extern RadioLibHal *RadioLibHAL;
+        RadioLibHAL = nullptr; // prevent use-after-free during sleep
         delete i2cBridgeHal;
         i2cBridgeHal = nullptr;
         sleep(3);
