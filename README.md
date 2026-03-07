@@ -22,7 +22,7 @@ accessed through its ATtiny84 I2C-to-SPI bridge.
 | Kernel | Megi 6.19+ |
 | LoRa radio | Semtech SX1262 (sub-GHz, 915 MHz ISM band) |
 | Bridge MCU | ATtiny84 (I2C-to-SPI bridge at address 0x28) |
-| I2C bus | `/dev/i2c-5` (`ff140000.i2c`, pogo pin bus) |
+| I2C bus | `/dev/i2c-5` (`ff140000.i2c`, pogo pin bus) *see note below* |
 | Antenna | Flex PCB antenna bonded to back cover (~1-2 dBi) |
 | Range | 0.5-2 km urban (limited by antenna) |
 
@@ -53,6 +53,12 @@ sudo i2cdetect -y 5
 ```
 
 If `28` doesn't appear, reseat the back cover firmly and try again.
+
+**I2C bus number note:** The pogo pin I2C bus is `/dev/i2c-5` on Megi kernel
+6.19. On other kernels (e.g. Mobian's stock `6.12-rockchip`) it may be
+`/dev/i2c-4`. Run `i2cdetect -l` to list all buses — look for `ff140000.i2c`.
+If your bus number differs, update it in the YAML config, the service file's
+`I2CDevice` field, and the helium-lorawan source (`I2C_DEVICE` in `main.cpp`).
 
 ## Part 1: Meshtastic (Mesh Messaging)
 
