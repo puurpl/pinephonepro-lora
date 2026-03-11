@@ -2,7 +2,7 @@
 
 This document describes the exact changes needed to add PineDio LoRa backplate
 (I2C bridge) support to the meshtastic firmware. These modifications were tested
-against meshtastic firmware version 2.7.20.
+against meshtastic firmware version 2.7.7.
 
 ## Overview
 
